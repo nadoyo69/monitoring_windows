@@ -41,6 +41,8 @@ class TrayManager(QSystemTrayIcon):
     toggle_widget_requested = Signal(bool)
     toggle_dashboard_requested = Signal()
     autorun_toggle_requested = Signal()
+    reset_position_requested = Signal()
+    toggle_lock_requested = Signal()
     exit_requested = Signal()
 
     def __init__(self, config: AppConfig, icon: QIcon = None, parent=None):
@@ -82,10 +84,20 @@ class TrayManager(QSystemTrayIcon):
 
         menu.addSeparator()
 
-        self.act_show_widget = menu.addAction("📌 Show Taskbar Bar")
+        self.act_show_widget = menu.addAction("📌 Tampilkan Bar di Layar/Taskbar")
         self.act_show_widget.setCheckable(True)
         self.act_show_widget.setChecked(self.config.show_taskbar_widget)
         self.act_show_widget.toggled.connect(self._on_widget_toggled)
+
+        self.act_reset_pos = menu.addAction("🎯 Reset Posisi Bar (Tampilkan Kembali)")
+        self.act_reset_pos.triggered.connect(lambda: self.reset_position_requested.emit())
+
+        self.act_lock = menu.addAction("🔒 Kunci Posisi")
+        self.act_lock.setCheckable(True)
+        self.act_lock.setChecked(self.config.is_locked)
+        self.act_lock.triggered.connect(lambda: self.toggle_lock_requested.emit())
+
+        menu.addSeparator()
 
         self.act_autorun = menu.addAction("🚀 Start on Windows Boot")
         self.act_autorun.setCheckable(True)
@@ -98,6 +110,11 @@ class TrayManager(QSystemTrayIcon):
         act_exit.triggered.connect(lambda: self.exit_requested.emit())
 
         self.setContextMenu(menu)
+
+    def sync_lock_state(self, is_locked: bool):
+        """Keep lock checkbox in sync with widget."""
+        self.act_lock.setChecked(is_locked)
+
 
     def _on_widget_toggled(self, checked: bool):
         self.config.show_taskbar_widget = checked

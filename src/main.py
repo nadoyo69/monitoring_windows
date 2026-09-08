@@ -132,6 +132,11 @@ def main():
     taskbar_widget.autorun_toggle_requested.connect(on_autorun_toggle)
     tray_manager.autorun_toggle_requested.connect(on_autorun_toggle)
 
+    # Position reset and Lock synchronizing
+    tray_manager.reset_position_requested.connect(taskbar_widget.reset_position)
+    tray_manager.toggle_lock_requested.connect(taskbar_widget._toggle_lock)
+    taskbar_widget.lock_toggled.connect(tray_manager.sync_lock_state)
+
     # Exit Handler
     def exit_app():
         sensor_worker.stop()

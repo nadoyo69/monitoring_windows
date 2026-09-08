@@ -1,8 +1,6 @@
-"""
-Taskbar Mini Bar Widget for Taskbar Hardware Monitor.
-A frameless, translucent, always-on-top compact widget docked near the Windows taskbar.
-"""
-from PySide6.QtCore import Qt, QPoint, Signal
+import sys
+import ctypes
+from PySide6.QtCore import Qt, QPoint, Signal, QTimer, QEvent
 from PySide6.QtGui import QAction, QFont, QCursor, QMouseEvent
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QLabel, QFrame, QMenu, QApplication
@@ -17,12 +15,14 @@ class TaskbarWidget(QWidget):
     refresh_rate_changed = Signal(float)
     autorun_toggle_requested = Signal()
     exit_requested = Signal()
+    lock_toggled = Signal(bool)
 
     def __init__(self, config: AppConfig, parent=None):
         super().__init__(parent)
         self.config = config
         self._drag_pos = QPoint()
         self._is_dragging = False
+        self._is_closing = False
 
         # Configure window flags: frameless, always-on-top, tool window (no Alt+Tab entry)
         self.setWindowFlags(
@@ -35,6 +35,7 @@ class TaskbarWidget(QWidget):
 
         self._init_ui()
         self._apply_initial_geometry()
+        self._init_win32_behavior()
 
     def _init_ui(self):
         self.setObjectName("TaskbarWidgetContainer")
@@ -126,18 +127,92 @@ class TaskbarWidget(QWidget):
         sep.setFixedHeight(14)
         return sep
 
+    def _init_win32_behavior(self):
+        """Configure Windows-specific topmost behavior and watchdog timer."""
+        # Periodic watchdog to keep widget above Windows Shell_TrayWnd even when taskbar is clicked
+        self._topmost_timer = QTimer(self)
+        self._topmost_timer.setInterval(1000)
+        self._topmost_timer.timeout.connect(self.ensure_topmost)
+        self._topmost_timer.start()
+
+    def ensure_topmost(self):
+        """Reassert topmost Z-order above Windows Shell_TrayWnd without stealing focus."""
+        if sys.platform == "win32" and self.isVisible():
+            try:
+                hwnd = int(self.winId())
+                HWND_TOPMOST = -1
+                # SWP_NOSIZE (1) | SWP_NOMOVE (2) | SWP_NOACTIVATE (0x10) | SWP_SHOWWINDOW (0x40) = 0x53
+                ctypes.windll.user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, 0x0053)
+            except Exception:
+                pass
+
+    def reset_position(self):
+        """Reset widget position to a safe visible location near taskbar and unlock it."""
+        screen = QApplication.primaryScreen()
+        screen_geo = screen.availableGeometry() if screen else None
+        if screen_geo:
+            target_x = screen_geo.x() + screen_geo.width() - self.width() - 20
+            target_y = screen_geo.y() + screen_geo.height() - self.height() - 8
+            self.move(target_x, target_y)
+            self.config.set_window_pos(target_x, target_y)
+        self.config.is_locked = False
+        self.config.show_taskbar_widget = True
+        self.config.save()
+        self.show()
+        self.showNormal()
+        self.raise_()
+        self.ensure_topmost()
+        self.lock_toggled.emit(False)
+
+    def changeEvent(self, event):
+        """Prevent widget from remaining minimized when Show Desktop (Win+D) is pressed."""
+        if event.type() == QEvent.Type.WindowStateChange:
+            if self.isMinimized() and self.config.show_taskbar_widget and not self._is_closing:
+                self.showNormal()
+                self.ensure_topmost()
+        super().changeEvent(event)
+
+    def hideEvent(self, event):
+        """Prevent unexpected hiding from Windows shell (e.g. Win+D or desktop toggle)."""
+        super().hideEvent(event)
+        if self.config.show_taskbar_widget and not self._is_closing:
+            QTimer.singleShot(100, self._restore_visibility)
+
+    def _restore_visibility(self):
+        if self.config.show_taskbar_widget and not self._is_closing:
+            self.show()
+            self.showNormal()
+            self.raise_()
+            self.ensure_topmost()
+
+    def closeEvent(self, event):
+        self._is_closing = True
+        if hasattr(self, '_topmost_timer'):
+            self._topmost_timer.stop()
+        super().closeEvent(event)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.ensure_topmost()
+
     def _apply_initial_geometry(self):
         """Set initial position from config or dock to bottom-right near taskbar."""
         pos = self.config.get_window_pos()
         screen = QApplication.primaryScreen()
-        screen_geo = screen.availableGeometry() if screen else None
+        screen_geo = screen.geometry() if screen else None
 
-        if pos is not None:
-            self.move(pos[0], pos[1])
+        if pos is not None and screen_geo:
+            x, y = pos
+            # Clamp to screen bounds so it never spawns completely off-screen
+            max_x = screen_geo.x() + screen_geo.width() - 40
+            max_y = screen_geo.y() + screen_geo.height() - 10
+            clamped_x = max(screen_geo.x(), min(x, max_x))
+            clamped_y = max(screen_geo.y(), min(y, max_y))
+            self.move(clamped_x, clamped_y)
         elif screen_geo:
-            # Position just above the bottom taskbar on the right side
+            # Default placement near bottom-right
             target_x = screen_geo.x() + screen_geo.width() - self.width() - 20
-            target_y = screen_geo.y() + screen_geo.height() - self.height() - 6
+            target_y = screen_geo.y() + screen_geo.height() - self.height() - 45
             self.move(target_x, target_y)
 
     def update_metrics(self, m: SystemMetrics):
@@ -166,6 +241,9 @@ class TaskbarWidget(QWidget):
         self.net_down_lbl.setText(f"↓{m.net_download_str}")
         self.net_up_lbl.setText(f"↑{m.net_upload_str}")
 
+        # Keep topmost above taskbar during metric updates
+        self.ensure_topmost()
+
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
@@ -188,6 +266,7 @@ class TaskbarWidget(QWidget):
                 # Save new position
                 self.config.set_window_pos(self.x(), self.y())
                 self._is_dragging = False
+                self.ensure_topmost()
             else:
                 # Regular click: Toggle flyout dashboard
                 self.toggle_dashboard_requested.emit()
@@ -223,7 +302,10 @@ class TaskbarWidget(QWidget):
 
         menu.addSeparator()
 
-        act_lock = menu.addAction("🔒 Lock Position")
+        act_reset = menu.addAction("🎯 Reset Posisi Bar")
+        act_reset.triggered.connect(self.reset_position)
+
+        act_lock = menu.addAction("🔒 Kunci Posisi")
         act_lock.setCheckable(True)
         act_lock.setChecked(self.config.is_locked)
         act_lock.triggered.connect(self._toggle_lock)
@@ -251,8 +333,10 @@ class TaskbarWidget(QWidget):
     def _toggle_lock(self):
         self.config.is_locked = not self.config.is_locked
         self.config.save()
+        self.lock_toggled.emit(self.config.is_locked)
 
     def _set_refresh_rate(self, rate: float):
         self.config.refresh_interval = rate
         self.config.save()
         self.refresh_rate_changed.emit(rate)
+

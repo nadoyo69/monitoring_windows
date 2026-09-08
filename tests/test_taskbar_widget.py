@@ -32,3 +32,22 @@ def test_taskbar_widget_init(qapp):
     assert widget.cpu_temp_lbl.text() == "58°C"
     assert widget.ram_pct_lbl.text() == "60%"
     assert widget.net_down_lbl.text() == "↓3.2 MB/s"
+
+def test_taskbar_widget_reset_position_and_lock(qapp):
+    cfg = AppConfig()
+    cfg.is_locked = True
+    widget = TaskbarWidget(config=cfg)
+
+    # Test reset_position
+    widget.reset_position()
+    assert widget.config.is_locked is False
+    assert widget.isVisible()
+
+    # Test toggle lock
+    widget._toggle_lock()
+    assert widget.config.is_locked is True
+
+    # Test ensure_topmost runs without error
+    widget.ensure_topmost()
+    widget.close()
+
