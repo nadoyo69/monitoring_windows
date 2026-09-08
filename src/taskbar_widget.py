@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 
 from src.config import AppConfig
 from src.sensor_manager import SystemMetrics
-from src.utils import get_temp_color
+from src.utils import get_temp_color, get_taskbar_geometry
 
 class TaskbarWidget(QWidget):
     toggle_dashboard_requested = Signal()
@@ -131,13 +131,13 @@ class TaskbarWidget(QWidget):
         """Configure Windows-specific topmost behavior and watchdog timer."""
         # Periodic watchdog to keep widget above Windows Shell_TrayWnd even when taskbar is clicked
         self._topmost_timer = QTimer(self)
-        self._topmost_timer.setInterval(1000)
+        self._topmost_timer.setInterval(200)  # 200ms interval for immediate topmost recovery
         self._topmost_timer.timeout.connect(self.ensure_topmost)
         self._topmost_timer.start()
 
     def ensure_topmost(self):
         """Reassert topmost Z-order above Windows Shell_TrayWnd without stealing focus."""
-        if sys.platform == "win32" and self.isVisible():
+        if sys.platform == "win32" and self.isVisible() and not self._is_closing:
             try:
                 hwnd = int(self.winId())
                 HWND_TOPMOST = -1
@@ -146,15 +146,16 @@ class TaskbarWidget(QWidget):
             except Exception:
                 pass
 
-    def reset_position(self):
-        """Reset widget position to a safe visible location near taskbar and unlock it."""
-        screen = QApplication.primaryScreen()
-        screen_geo = screen.availableGeometry() if screen else None
-        if screen_geo:
-            target_x = screen_geo.x() + screen_geo.width() - self.width() - 20
-            target_y = screen_geo.y() + screen_geo.height() - self.height() - 8
-            self.move(target_x, target_y)
-            self.config.set_window_pos(target_x, target_y)
+    def dock_inside_taskbar(self, x: int | None = None):
+        """Snap and dock the widget centered cleanly inside the Windows taskbar."""
+        tb_left, tb_top, tb_right, tb_bottom = get_taskbar_geometry()
+        tb_height = tb_bottom - tb_top
+        target_y = tb_top + max(0, (tb_height - self.height()) // 2)
+        target_x = x if x is not None else max(10, min(self.x(), tb_right - self.width() - 20))
+        if target_x < 100:
+            target_x = 240  # Ideal slot between Windows 11 Weather widget and centered icons
+        self.move(target_x, target_y)
+        self.config.set_window_pos(target_x, target_y)
         self.config.is_locked = False
         self.config.show_taskbar_widget = True
         self.config.save()
@@ -163,6 +164,34 @@ class TaskbarWidget(QWidget):
         self.raise_()
         self.ensure_topmost()
         self.lock_toggled.emit(False)
+
+    def float_above_taskbar(self, x: int | None = None):
+        """Dock the widget flush directly on top of the Windows taskbar."""
+        tb_left, tb_top, tb_right, tb_bottom = get_taskbar_geometry()
+        target_y = tb_top - self.height() - 2
+        target_x = x if x is not None else max(10, min(self.x(), tb_right - self.width() - 20))
+        if target_x < 50:
+            target_x = 10
+        self.move(target_x, target_y)
+        self.config.set_window_pos(target_x, target_y)
+        self.config.is_locked = False
+        self.config.show_taskbar_widget = True
+        self.config.save()
+        self.show()
+        self.showNormal()
+        self.raise_()
+        self.ensure_topmost()
+        self.lock_toggled.emit(False)
+
+    def reset_position(self):
+        """Reset widget position to a safe visible location docked directly above taskbar."""
+        self.float_above_taskbar(x=240)
+
+    def enterEvent(self, event):
+        """Ensure widget is brought to top immediately on hover."""
+        super().enterEvent(event)
+        self.ensure_topmost()
+        self.raise_()
 
     def changeEvent(self, event):
         """Prevent widget from remaining minimized when Show Desktop (Win+D) is pressed."""
@@ -196,24 +225,21 @@ class TaskbarWidget(QWidget):
         self.ensure_topmost()
 
     def _apply_initial_geometry(self):
-        """Set initial position from config or dock to bottom-right near taskbar."""
+        """Set initial position from config or dock flush above taskbar."""
         pos = self.config.get_window_pos()
-        screen = QApplication.primaryScreen()
-        screen_geo = screen.geometry() if screen else None
+        tb_left, tb_top, tb_right, tb_bottom = get_taskbar_geometry()
+        max_y = tb_top - self.height() - 2
+        max_x = tb_right - self.width() - 10
 
-        if pos is not None and screen_geo:
+        if pos is not None:
             x, y = pos
-            # Clamp to screen bounds so it never spawns completely off-screen
-            max_x = screen_geo.x() + screen_geo.width() - 40
-            max_y = screen_geo.y() + screen_geo.height() - 10
-            clamped_x = max(screen_geo.x(), min(x, max_x))
-            clamped_y = max(screen_geo.y(), min(y, max_y))
+            clamped_x = max(tb_left + 10, min(x, max_x))
+            clamped_y = max(10, min(y, max_y))
             self.move(clamped_x, clamped_y)
-        elif screen_geo:
-            # Default placement near bottom-right
-            target_x = screen_geo.x() + screen_geo.width() - self.width() - 20
-            target_y = screen_geo.y() + screen_geo.height() - self.height() - 45
-            self.move(target_x, target_y)
+        else:
+            # Default dock flush above taskbar near bottom-left or bottom-right
+            target_x = 240
+            self.move(target_x, max_y)
 
     def update_metrics(self, m: SystemMetrics):
         """Update display elements with latest metrics."""
@@ -256,8 +282,16 @@ class TaskbarWidget(QWidget):
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() & Qt.MouseButton.LeftButton and not self.config.is_locked:
             new_pos = event.globalPosition().toPoint() - self._drag_pos
+            
+            # Snap flush directly above taskbar to prevent falling into Windows 11 taskbar band
+            tb_left, tb_top, tb_right, tb_bottom = get_taskbar_geometry()
+            flush_dock_y = tb_top - self.height() - 2
+            if new_pos.y() > flush_dock_y - 12:
+                new_pos.setY(flush_dock_y)
+
             self.move(new_pos)
             self._is_dragging = True
+            self.ensure_topmost()
             event.accept()
 
     def mouseReleaseEvent(self, event: QMouseEvent):
@@ -266,6 +300,7 @@ class TaskbarWidget(QWidget):
                 # Save new position
                 self.config.set_window_pos(self.x(), self.y())
                 self._is_dragging = False
+                self.raise_()
                 self.ensure_topmost()
             else:
                 # Regular click: Toggle flyout dashboard
@@ -297,12 +332,18 @@ class TaskbarWidget(QWidget):
             }
         """)
 
-        act_dashboard = menu.addAction("📊 Open Flyout Dashboard")
+        act_dashboard = menu.addAction("📊 Buka Flyout Dashboard")
         act_dashboard.triggered.connect(lambda: self.toggle_dashboard_requested.emit())
 
         menu.addSeparator()
 
-        act_reset = menu.addAction("🎯 Reset Posisi Bar")
+        act_dock_tb = menu.addAction("📌 Tempel di Dalam Taskbar")
+        act_dock_tb.triggered.connect(lambda: self.dock_inside_taskbar(self.x()))
+
+        act_float_tb = menu.addAction("📌 Pasang di Atas Taskbar")
+        act_float_tb.triggered.connect(lambda: self.float_above_taskbar(self.x()))
+
+        act_reset = menu.addAction("🎯 Reset Posisi Default")
         act_reset.triggered.connect(self.reset_position)
 
         act_lock = menu.addAction("🔒 Kunci Posisi")

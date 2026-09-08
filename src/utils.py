@@ -41,3 +41,40 @@ def get_temp_color(temp_c: float | None) -> str:
     elif temp_c <= 85.0:
         return "#f59e0b"
     return "#ef4444"
+
+def get_taskbar_geometry() -> tuple[int, int, int, int]:
+    """
+    Get Windows Taskbar bounding box (left, top, right, bottom).
+    Fallback to standard bottom 48px if Win32 API is unavailable.
+    """
+    try:
+        from ctypes import wintypes
+        class APPBARDATA(ctypes.Structure):
+            _fields_ = [
+                ('cbSize', wintypes.DWORD),
+                ('hWnd', wintypes.HWND),
+                ('uCallbackMessage', wintypes.UINT),
+                ('uEdge', wintypes.UINT),
+                ('rc', wintypes.RECT),
+                ('lParam', wintypes.LPARAM),
+            ]
+        abd = APPBARDATA()
+        abd.cbSize = ctypes.sizeof(APPBARDATA)
+        res = ctypes.windll.shell32.SHAppBarMessage(5, ctypes.byref(abd)) # ABM_GETTASKBARPOS = 5
+        if res and (abd.rc.right > abd.rc.left) and (abd.rc.bottom > abd.rc.top):
+            return (abd.rc.left, abd.rc.top, abd.rc.right, abd.rc.bottom)
+    except Exception:
+        pass
+
+    try:
+        tray = ctypes.windll.user32.FindWindowW("Shell_TrayWnd", None)
+        if tray:
+            rect = (ctypes.c_long * 4)()
+            if ctypes.windll.user32.GetWindowRect(tray, rect):
+                return (rect[0], rect[1], rect[2], rect[3])
+    except Exception:
+        pass
+
+    # Default fallback: 1920x1200 bottom taskbar (48px)
+    return (0, 1152, 1920, 1200)
+

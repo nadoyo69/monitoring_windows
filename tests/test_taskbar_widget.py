@@ -49,5 +49,17 @@ def test_taskbar_widget_reset_position_and_lock(qapp):
 
     # Test ensure_topmost runs without error
     widget.ensure_topmost()
+
+    # Test dock_inside_taskbar
+    widget.dock_inside_taskbar(x=240)
+    assert widget.x() == 240
+    assert widget.isVisible()
+
+    # Test float_above_taskbar
+    widget.float_above_taskbar(x=240)
+    assert widget.x() == 240
+    assert widget.isVisible()
+
     widget.close()
+
 

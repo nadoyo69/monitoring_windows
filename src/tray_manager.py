@@ -42,6 +42,8 @@ class TrayManager(QSystemTrayIcon):
     toggle_dashboard_requested = Signal()
     autorun_toggle_requested = Signal()
     reset_position_requested = Signal()
+    dock_inside_taskbar_requested = Signal()
+    float_above_taskbar_requested = Signal()
     toggle_lock_requested = Signal()
     exit_requested = Signal()
 
@@ -89,7 +91,13 @@ class TrayManager(QSystemTrayIcon):
         self.act_show_widget.setChecked(self.config.show_taskbar_widget)
         self.act_show_widget.toggled.connect(self._on_widget_toggled)
 
-        self.act_reset_pos = menu.addAction("🎯 Reset Posisi Bar (Tampilkan Kembali)")
+        self.act_dock_tb = menu.addAction("📌 Tempel di Dalam Taskbar")
+        self.act_dock_tb.triggered.connect(lambda: self.dock_inside_taskbar_requested.emit())
+
+        self.act_float_tb = menu.addAction("📌 Pasang di Atas Taskbar")
+        self.act_float_tb.triggered.connect(lambda: self.float_above_taskbar_requested.emit())
+
+        self.act_reset_pos = menu.addAction("🎯 Reset Posisi Default")
         self.act_reset_pos.triggered.connect(lambda: self.reset_position_requested.emit())
 
         self.act_lock = menu.addAction("🔒 Kunci Posisi")
