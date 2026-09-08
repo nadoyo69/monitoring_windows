@@ -40,12 +40,12 @@ def test_taskbar_widget_reset_position_and_lock(qapp):
 
     # Test reset_position
     widget.reset_position()
-    assert widget.config.is_locked is False
+    assert widget.config.is_locked is True
     assert widget.isVisible()
 
     # Test toggle lock
     widget._toggle_lock()
-    assert widget.config.is_locked is True
+    assert widget.config.is_locked is False
 
     # Test ensure_topmost runs without error
     widget.ensure_topmost()

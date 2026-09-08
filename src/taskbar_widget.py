@@ -166,26 +166,24 @@ class TaskbarWidget(QWidget):
         self.lock_toggled.emit(False)
 
     def float_above_taskbar(self, x: int | None = None):
-        """Dock the widget flush directly on top of the Windows taskbar."""
+        """Dock the widget flush directly on top of the Windows taskbar (Option 2)."""
         tb_left, tb_top, tb_right, tb_bottom = get_taskbar_geometry()
         target_y = tb_top - self.height() - 2
-        target_x = x if x is not None else max(10, min(self.x(), tb_right - self.width() - 20))
-        if target_x < 50:
-            target_x = 10
+        target_x = x if x is not None else 10
         self.move(target_x, target_y)
         self.config.set_window_pos(target_x, target_y)
-        self.config.is_locked = False
+        self.config.is_locked = True
         self.config.show_taskbar_widget = True
         self.config.save()
         self.show()
         self.showNormal()
         self.raise_()
         self.ensure_topmost()
-        self.lock_toggled.emit(False)
+        self.lock_toggled.emit(True)
 
     def reset_position(self):
-        """Reset widget position to a safe visible location docked directly above taskbar."""
-        self.float_above_taskbar(x=240)
+        """Reset widget position to Option 2: flush directly above taskbar at (10, 1120)."""
+        self.float_above_taskbar(x=10)
 
     def enterEvent(self, event):
         """Ensure widget is brought to top immediately on hover."""
