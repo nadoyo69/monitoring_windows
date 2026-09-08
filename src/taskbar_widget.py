@@ -40,7 +40,7 @@ class TaskbarWidget(QWidget):
     def _init_ui(self):
         self.setObjectName("TaskbarWidgetContainer")
         self.setFixedHeight(30)
-        self.setFixedWidth(310)
+        self.setFixedWidth(320)
 
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

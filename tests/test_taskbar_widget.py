@@ -14,7 +14,7 @@ def qapp():
 def test_taskbar_widget_init(qapp):
     cfg = AppConfig()
     widget = TaskbarWidget(config=cfg)
-    assert widget.width() == 310
+    assert widget.width() == 320
     assert widget.height() == 30
 
     # Test metric updates

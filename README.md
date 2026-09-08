@@ -6,6 +6,23 @@ Dirancang khusus untuk laptop modern (seperti **Intel Core Ultra 7 155H**) denga
 
 ---
 
+## Tampilan Antarmuka (Preview)
+
+### 1. Tampilan Lengkap (Interactive Overview)
+![Overview Taskbar Hardware Monitor](assets/full_showcase_preview.png)
+
+### 2. Mini Bar di Taskbar Windows 10 / 11
+Mini bar frameless transparan yang menyatu elegan dengan taskbar Windows tanpa memakan tempat:
+![Mini Taskbar Bar Preview](assets/taskbar_widget_preview.png)
+
+### 3. Flyout Dashboard (Popup Detail & Sparkline)
+Klik mini bar atau ikon tray untuk membuka panel metrik detail, grafik riwayat CPU, dan proses teraktif:
+<p align="center">
+  <img src="assets/flyout_dashboard_preview.png" alt="Flyout Dashboard Preview" width="380">
+</p>
+
+---
+
 ## Fitur Utama
 
 - **Mini Taskbar Bar**: Strip horizontal frameless transparan yang menempel di taskbar, selalu terlihat di atas aplikasi lain (*Always on Top*).
@@ -14,7 +31,7 @@ Dirancang khusus untuk laptop modern (seperti **Intel Core Ultra 7 155H**) denga
   - 🟣 **RAM Usage (%)** & Detail Kapasitas (GB terpakai / total GB)
   - 🟢 **Network Throughput (Download & Upload)** dengan satuan otomatis (KB/s, MB/s)
 - **Flyout Dashboard Modern**: Klik mini bar atau tray icon untuk membuka pop-up card bergaya Fluent / Glassmorphism dengan grafik riwayat 60 detik (*sparkline graph*) dan 3 proses teratas yang mengonsumsi CPU terbesar.
-- **Posisi Bebas (Drag & Drop)**: Geser widget ke posisi mana pun di taskbar atau layar sesuai selera, dilengkapi fitur **Lock Position** di menu klik-kanan.
+- **Posisi Bebas (Drag & Drop)**: Geser widget ke posisi mana pun di taskbar atau layar sesuai selera, dilengkapi fitur **Lock Position** dan **Reset Posisi** di menu klik-kanan.
 - **Indikator Warna Pintar**:
   - 🟢 **Normal (< 70°C)**: Hijau emerald
   - 🟡 **Peringatan (70°C - 85°C)**: Kuning amber
@@ -61,7 +78,8 @@ taskbar-hardware-monitor/
 │   ├── autorun_manager.py   # Pengelola Windows Task Scheduler
 │   ├── config.py            # Manajemen konfigurasi & posisi tersimpan
 │   └── utils.py             # Format kecepatan, byte, dan deteksi admin
-├── tests/                   # 17 Unit test otomatis
+├── assets/                  # Screenshot preview UI untuk dokumentasi
+├── tests/                   # 18 Unit test otomatis
 ├── requirements.txt         # Daftar dependensi Python
 ├── run.bat                  # Script 1-klik menjalankan aplikasi
 ├── install-autorun.bat      # Script 1-klik pasang auto-start
