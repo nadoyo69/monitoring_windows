@@ -1,88 +1,96 @@
 # Taskbar Hardware Monitor (Windows 10 / 11)
 
-Aplikasi desktop modern yang ringan dan efisien untuk memantau performa sistem dan suhu hardware Windows secara real-time langsung dari Taskbar.
+A sleek, modern, and lightweight Windows desktop application designed to monitor real-time system performance and hardware temperatures directly from your Taskbar.
 
-Dirancang khusus untuk laptop modern (seperti **Intel Core Ultra 7 155H**) dengan konsumsi memori sangat hemat (**< 45 MB RAM**) dan pemakaian CPU hampir 0%.
+Optimized specifically for modern laptops and workstations (e.g. **Intel Core Ultra 7 155H**) with ultra-low memory footprint (**< 45 MB RAM**) and near-zero CPU usage.
 
 ---
 
-## Tampilan Antarmuka (Preview)
+## User Interface Preview
 
-### 1. Tampilan Lengkap (Interactive Overview)
+### 1. Interactive Overview
 ![Overview Taskbar Hardware Monitor](assets/full_showcase_preview.png)
 
-### 2. Mini Bar di Taskbar Windows 10 / 11
-Mini bar frameless transparan yang menyatu elegan dengan taskbar Windows tanpa memakan tempat:
+### 2. Mini Bar on Windows 10 / 11 Taskbar
+A translucent, frameless mini bar that seamlessly blends with the Windows taskbar without cluttering workspace:
 ![Mini Taskbar Bar Preview](assets/taskbar_widget_preview.png)
 
-### 3. Flyout Dashboard (Popup Detail & Sparkline)
-Klik mini bar atau ikon tray untuk membuka panel metrik detail, grafik riwayat CPU, dan proses teraktif:
+### 3. Flyout Dashboard (Detailed Metrics & Sparkline)
+Click the mini bar or the system tray icon to reveal a Fluent/Glassmorphism popup card with 60-second CPU history sparkline, memory breakdown, throughput stats, and top active processes:
 <p align="center">
   <img src="assets/flyout_dashboard_preview.png" alt="Flyout Dashboard Preview" width="380">
 </p>
 
 ---
 
-## Fitur Utama
+## Key Features
 
-- **Mini Taskbar Bar**: Strip horizontal frameless transparan yang menempel di taskbar, selalu terlihat di atas aplikasi lain (*Always on Top*).
-- **Pemantauan 4 Metrik Inti Real-Time**:
-  - ⚡ **CPU Usage (%)** & **CPU Temperature (°C)**
-  - 🟣 **RAM Usage (%)** & Detail Kapasitas (GB terpakai / total GB)
-  - 🟢 **Network Throughput (Download & Upload)** dengan satuan otomatis (KB/s, MB/s)
-- **Flyout Dashboard Modern**: Klik mini bar atau tray icon untuk membuka pop-up card bergaya Fluent / Glassmorphism dengan grafik riwayat 60 detik (*sparkline graph*) dan 3 proses teratas yang mengonsumsi CPU terbesar.
-- **Posisi Bebas (Drag & Drop)**: Geser widget ke posisi mana pun di taskbar atau layar sesuai selera, dilengkapi fitur **Lock Position** dan **Reset Posisi** di menu klik-kanan.
-- **Indikator Warna Pintar**:
-  - 🟢 **Normal (< 70°C)**: Hijau emerald
-  - 🟡 **Peringatan (70°C - 85°C)**: Kuning amber
-  - 🔴 **Tinggi (> 85°C)**: Merah
-- **Auto-Run On Boot (Tanpa UAC Prompt)**: Terintegrasi dengan Windows Task Scheduler menggunakan hak akses tertinggi, sehingga otomatis aktif saat laptop menyala tanpa memunculkan dialog konfirmasi UAC yang mengganggu.
-- **Graceful Fallback**: Jika dijalankan tanpa Administrator, aplikasi tetap memantau CPU, RAM, dan Network secara normal tanpa crash, dengan indikator status suhu membutuhkan izin admin.
+- **Mini Taskbar Bar**: Sleek horizontal frameless floating bar docked near the taskbar, always visible on top of other windows (*Always on Top*).
+- **Real-Time 4-Core Metric Monitoring**:
+  - ⚡ **CPU Utilization (%)** & **CPU Temperature (°C)**
+  - 🟣 **RAM Usage (%)** & Memory Capacity Details (Used GB / Total GB)
+  - 🟢 **Network Throughput (Download & Upload)** with auto-scaling units (KB/s, MB/s)
+- **Modern Flyout Dashboard**: One-click expandable card featuring a 60-second historical sparkline graph, memory progress indicator, network meter, and top 3 CPU-intensive processes.
+- **Flexible Drag & Drop Positioning**: Reposition the bar anywhere across taskbars or multiple monitors, with **Lock Position** and **Reset Position** options in the right-click menu.
+- **Smart Temperature Alert Coloring**:
+  - 🟢 **Normal (< 70°C)**: Emerald Green
+  - 🟡 **Warning (70°C - 85°C)**: Amber Yellow
+  - 🔴 **High (> 85°C)**: Crimson Red
+- **Seamless Auto-Run on Boot (No UAC Prompts)**: Fully integrated with Windows Task Scheduler using elevated privileges (`HighestAvailable`), automatically starting on logon without annoying UAC dialogs.
+- **Graceful Fallback**: If launched without Administrator rights, the application continues to monitor CPU, RAM, and Network seamlessly, displaying a friendly prompt for temperature sensor access.
 
 ---
 
-## Cara Menjalankan
+## Getting Started
 
-### 1. Menjalankan Langsung
-Cukup klik dua kali file:
+### 1. Quick Launch
+Simply double-click:
 ```text
 run.bat
 ```
-Aplikasi akan langsung berjalan di latar belakang (`pythonw.exe`) tanpa memunculkan jendela terminal hitam.
+The application will launch quietly in the background (`pythonw.exe`) with no terminal window.
 
-### 2. Mengaktifkan Auto-Run Saat Laptop Dinyalakan
-- **Cara 1 (Rekomendasi)**: Klik kanan file `install-autorun.bat` lalu pilih **Run as administrator**.
-- **Cara 2**: Klik kanan pada widget mini bar di taskbar atau ikon tray, lalu centang **Start on Windows Boot**.
+### 2. Enable Auto-Run on Windows Startup
+- **Method 1 (Recommended)**: Right-click `install-autorun.bat` and select **Run as administrator**.
+- **Method 2**: Right-click the mini bar or tray icon and check **Start on Windows Boot**.
 
-Untuk mematikan auto-run, jalankan `uninstall-autorun.bat` atau hilangkan centang di menu aplikasi.
+To disable auto-start, run `uninstall-autorun.bat` or uncheck the option in the application menu.
 
-### 3. Mengompilasi Menjadi File `.exe` Mandiri (Opsional)
-Jalankan:
+### 3. Standalone Executable Build (Optional)
+To package into a single standalone `.exe` file without needing Python installed:
 ```text
 build_exe.bat
 ```
-Script akan otomatis membuat file `TaskbarHardwareMonitor.exe` mandiri di dalam folder `dist/`.
+The executable `TaskbarHardwareMonitor.exe` will be generated inside the `dist/` directory.
 
 ---
 
-## Struktur Proyek
+## Project Structure
 
 ```text
 taskbar-hardware-monitor/
 ├── src/
-│   ├── main.py              # Entry point aplikasi & single-instance manager
-│   ├── sensor_manager.py    # Worker thread pengambil metrik (CPU, RAM, Net, Suhu)
-│   ├── taskbar_widget.py    # Mini Bar transparan di atas taskbar
-│   ├── flyout_dashboard.py  # Popup card detail dengan sparkline graph
-│   ├── tray_manager.py      # Ikon system tray di dekat jam
-│   ├── autorun_manager.py   # Pengelola Windows Task Scheduler
-│   ├── config.py            # Manajemen konfigurasi & posisi tersimpan
-│   └── utils.py             # Format kecepatan, byte, dan deteksi admin
-├── assets/                  # Screenshot preview UI untuk dokumentasi
-├── tests/                   # 18 Unit test otomatis
-├── requirements.txt         # Daftar dependensi Python
-├── run.bat                  # Script 1-klik menjalankan aplikasi
-├── install-autorun.bat      # Script 1-klik pasang auto-start
-├── uninstall-autorun.bat    # Script 1-klik lepas auto-start
-└── build_exe.bat            # Script 1-klik compile ke .exe
+│   ├── main.py              # Application entry point & single-instance manager
+│   ├── sensor_manager.py    # Background worker thread (CPU, RAM, Net, Temp)
+│   ├── taskbar_widget.py    # Translucent mini bar with topmost & docking logic
+│   ├── flyout_dashboard.py  # Expandable popup card with 60s sparkline graph
+│   ├── tray_manager.py      # System tray icon (notification area near clock)
+│   ├── autorun_manager.py   # Windows Task Scheduler manager
+│   ├── config.py            # Persistent settings & window geometry store
+│   └── utils.py             # Unit formatters, color rules, and Win32 helpers
+├── assets/                  # UI screenshots and visual previews
+├── tests/                   # Automated unit test suite (18 unit tests)
+├── requirements.txt         # Python package dependencies
+├── run.bat                  # 1-click launcher script
+├── install-autorun.bat      # 1-click elevated auto-start installer
+├── uninstall-autorun.bat    # 1-click auto-start uninstaller
+└── build_exe.bat            # 1-click PyInstaller build script
 ```
+
+---
+
+## Requirements
+
+- **Operating System**: Windows 10 / Windows 11 (64-bit)
+- **Python**: 3.10 or newer
+- **Dependencies**: `PySide6`, `psutil`, `wmi` (listed in `requirements.txt`)
