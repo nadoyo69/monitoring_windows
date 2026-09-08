@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / testing cache
+.pytest_cache/
+
+# Build & Dist artifacts
+build/
+dist/
+*.spec
+
+# Local app locks & temporary configs
+.app.lock
+.superpowers/
+
+# Environment files
+.env
+.venv/
+env/
+venv/

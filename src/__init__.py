@@ -1,0 +1,1 @@
+# taskbar-hardware-monitor package
