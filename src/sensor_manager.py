@@ -55,14 +55,14 @@ class SensorWorker(QThread):
         psutil.cpu_percent(interval=None)
 
     def _init_hardware_monitor(self):
-        """Initialize LibreHardwareMonitorLib if running with administrator privileges."""
-        if not self.has_admin:
-            return
-
+        """Initialize LibreHardwareMonitorLib for hardware temperature sensor access."""
         try:
             dll_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "lib")
             dll_path = os.path.join(dll_dir, "LibreHardwareMonitorLib.dll")
             if os.path.exists(dll_path):
+                import sys
+                if dll_dir not in sys.path:
+                    sys.path.append(dll_dir)
                 import clr
                 clr.AddReference(dll_path)
                 from LibreHardwareMonitor.Hardware import Computer
@@ -75,23 +75,19 @@ class SensorWorker(QThread):
 
     def _read_cpu_temperature(self) -> Tuple[Optional[float], str]:
         """Read CPU temperature via LibreHardwareMonitorLib or ACPI WMI fallback."""
-        if not self.has_admin:
-            return None, "needs_admin"
-
-        # Try LibreHardwareMonitor if available
+        # Try LibreHardwareMonitor if initialized
         if self._hardware_computer:
             try:
                 for hardware in self._hardware_computer.Hardware:
                     hardware.Update()
-                    # Look for Package or Core temperatures
                     package_temp = None
                     core_temps = []
                     for sensor in hardware.Sensors:
-                        if sensor.SensorType == 2:  # 2 = Temperature in LibreHardwareMonitor
+                        if str(sensor.SensorType) == "Temperature":
                             val = sensor.Value
-                            if val is not None and val > 0:
+                            if val is not None and float(val) > 0:
                                 name_lower = sensor.Name.lower()
-                                if "package" in name_lower or "cpu total" in name_lower:
+                                if "package" in name_lower or "cpu total" in name_lower or "core max" in name_lower:
                                     package_temp = float(val)
                                 elif "core" in name_lower:
                                     core_temps.append(float(val))
@@ -115,6 +111,8 @@ class SensorWorker(QThread):
         except Exception:
             pass
 
+        if not self.has_admin:
+            return None, "needs_admin"
         return None, "unsupported"
 
     def _calc_net_rates(self, bytes_recv: int, bytes_sent: int, current_time: float) -> Tuple[float, float]:
