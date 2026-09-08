@@ -50,13 +50,27 @@ run.bat
 ```
 The application will launch quietly in the background (`pythonw.exe`) with no terminal window.
 
-### 2. Enable Auto-Run on Windows Startup
+### 2. Enable Auto-Run on Windows Startup (With Laptop Battery Support)
 - **Method 1 (Recommended)**: Right-click `install-autorun.bat` and select **Run as administrator**.
+  - Automatically registers in Windows Task Scheduler with `HighestAvailable` privileges (no UAC dialogs on boot).
+  - Configures power management flags (`AllowStartIfOnBatteries` & `DontStopIfGoingOnBatteries`) so the widget remains active on laptops even when unplugged from AC power.
+  - Automatically verifies and prompts to install the signed **PawnIO** kernel driver if needed for CPU temperature readings.
 - **Method 2**: Right-click the mini bar or tray icon and check **Start on Windows Boot**.
 
 To disable auto-start, run `uninstall-autorun.bat` or uncheck the option in the application menu.
 
-### 3. Standalone Executable Build (Optional)
+### 3. CPU Temperature Sensor & Modern Windows 11 Driver (PawnIO)
+Modern processors such as **Intel Core Ultra (Meteor Lake)** and Windows 11 systems with **Memory Integrity (Core Isolation)** enabled block legacy, insecure drivers (like `WinRing0`).
+
+Taskbar Hardware Monitor leverages **LibreHardwareMonitor** integrated with the official Microsoft WHQL-signed **PawnIO** kernel driver:
+- Running `install-autorun.bat` as Administrator automatically detects and prompts to install the official PawnIO driver.
+- Alternatively, you can install it via Windows Package Manager:
+  ```powershell
+  winget install namazso.PawnIO
+  ```
+- Once installed, real-time core and package temperatures (°C) are available across all CPU models.
+
+### 4. Standalone Executable Build (Optional)
 To package into a single standalone `.exe` file without needing Python installed:
 ```text
 build_exe.bat
@@ -82,7 +96,7 @@ taskbar-hardware-monitor/
 ├── tests/                   # Automated unit test suite (18 unit tests)
 ├── requirements.txt         # Python package dependencies
 ├── run.bat                  # 1-click launcher script
-├── install-autorun.bat      # 1-click elevated auto-start installer
+├── install-autorun.bat      # 1-click elevated auto-start installer (with PawnIO setup)
 ├── uninstall-autorun.bat    # 1-click auto-start uninstaller
 └── build_exe.bat            # 1-click PyInstaller build script
 ```
@@ -93,4 +107,13 @@ taskbar-hardware-monitor/
 
 - **Operating System**: Windows 10 / Windows 11 (64-bit)
 - **Python**: 3.10 or newer
-- **Dependencies**: `PySide6`, `psutil`, `wmi` (listed in `requirements.txt`)
+- **Dependencies**: `PySide6`, `psutil`, `wmi`, `clr` / `pythonnet` (listed in `requirements.txt`)
+- **Driver (Optional for CPU Temp)**: [PawnIO](https://github.com/namazso/PawnIO.Setup) for Windows 11 Core Isolation / Intel Core Ultra
+
+---
+
+## License & Credits
+
+- Repository: [https://github.com/nadoyo69/monitoring_windows](https://github.com/nadoyo69/monitoring_windows)
+- Created & Maintained by [@nadoyo69](https://github.com/nadoyo69)
+

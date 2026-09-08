@@ -11,10 +11,11 @@ build/
 dist/
 *.spec
 
-# Local app locks & temporary configs
+# Local app locks & temporary configs / installers
 .app.lock
 .superpowers/
 config.json
+PawnIO_setup.exe
 
 # Environment files
 .env
