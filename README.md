@@ -8,12 +8,18 @@ Optimized specifically for modern laptops and workstations (e.g. **Intel Core Ul
 
 ## User Interface Preview
 
-### 1. Interactive Overview
-![Overview Taskbar Hardware Monitor](assets/full_showcase_preview.png)
+### 1. Interactive Overview with Floating YouTube PiP
+Docked seamlessly into the Windows taskbar with hardware metrics and an integrated YouTube Mini-Player and floating Picture-in-Picture window:
+![Overview Taskbar Hardware Monitor with PiP](assets/youtube_pip_preview.jpg)
 
 ### 2. Mini Bar on Windows 10 / 11 Taskbar
-A translucent, frameless mini bar that seamlessly blends with the Windows taskbar without cluttering workspace:
-![Mini Taskbar Bar Preview](assets/taskbar_widget_preview.png)
+A translucent, frameless mini bar that seamlessly blends with the Windows taskbar, featuring hardware metrics and media controls:
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ [CPU 8% 58°]  [RAM 83%]  [NET ↓703 ↑709]  │  ▶   lıllı   ⤢  │
+└──────────────────────────────────────────────────────────────┘
+```
+![Mini Taskbar Bar Preview](assets/full_showcase_preview.jpg)
 
 ### 3. Flyout Dashboard (Detailed Metrics & Sparkline)
 Click the mini bar or the system tray icon to reveal a Fluent/Glassmorphism popup card with 60-second CPU history sparkline, memory breakdown, throughput stats, and top active processes:
@@ -26,6 +32,12 @@ Click the mini bar or the system tray icon to reveal a Fluent/Glassmorphism popu
 ## Key Features
 
 - **Mini Taskbar Bar**: Sleek horizontal frameless floating bar docked near the taskbar, always visible on top of other windows (*Always on Top*).
+- **📺 Integrated YouTube Mini-Player & Picture-in-Picture (PiP)**:
+  - **Single Unified Pill**: Media controls embedded directly into the same taskbar bar (`▶` Play/Pause, `lıllı` Animated Audio Frequency Wave, `⤢` Pop-up PiP).
+  - **Floating PiP Window**: Frameless acrylic mini-window with Windows 11 rounded corners, draggable anywhere on your desktop and always-on-top.
+  - **Auto-Bypass YouTube Embed Restriction (Error 152)**: Seamlessly handles restricted/licensed music videos with automatic clean theater mode fallback.
+  - **Ultra-Low Resource / Hardware-Accelerated**: Video decoding runs directly on your GPU (e.g. Intel Arc Graphics), keeping CPU usage near zero and laptop temperatures cool.
+  - **Quick Radio Presets**: Right-click menu with 1-click access to *Lofi Girl 24/7*, *Chillhop*, *Deep Focus Piano*, and *Synthwave*.
 - **Real-Time 4-Core Metric Monitoring**:
   - ⚡ **CPU Utilization (%)** & **CPU Temperature (°C)**
   - 🟣 **RAM Usage (%)** & Memory Capacity Details (Used GB / Total GB)
@@ -86,14 +98,15 @@ taskbar-hardware-monitor/
 ├── src/
 │   ├── main.py              # Application entry point & single-instance manager
 │   ├── sensor_manager.py    # Background worker thread (CPU, RAM, Net, Temp)
-│   ├── taskbar_widget.py    # Translucent mini bar with topmost & docking logic
+│   ├── taskbar_widget.py    # Translucent mini bar with media controls & docking logic
+│   ├── youtube_player.py    # YouTube PiP floating window & auto-bypass player engine
 │   ├── flyout_dashboard.py  # Expandable popup card with 60s sparkline graph
 │   ├── tray_manager.py      # System tray icon (notification area near clock)
 │   ├── autorun_manager.py   # Windows Task Scheduler manager
 │   ├── config.py            # Persistent settings & window geometry store
 │   └── utils.py             # Unit formatters, color rules, and Win32 helpers
 ├── assets/                  # UI screenshots and visual previews
-├── tests/                   # Automated unit test suite (18 unit tests)
+├── tests/                   # Automated unit test suite (21 unit tests)
 ├── requirements.txt         # Python package dependencies
 ├── run.bat                  # 1-click launcher script
 ├── install-autorun.bat      # 1-click elevated auto-start installer (with PawnIO setup)
