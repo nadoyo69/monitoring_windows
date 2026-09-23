@@ -14,8 +14,17 @@ def qapp():
 def test_taskbar_widget_init(qapp):
     cfg = AppConfig()
     widget = TaskbarWidget(config=cfg)
-    assert widget.width() == 320
+    assert widget.width() == 415
     assert widget.height() == 30
+
+    # Test media state updates
+    widget.set_playback_state(True)
+    assert widget.media_play_btn.text() == "⏸"
+    assert widget.audio_wave.is_active is True
+
+    widget.set_playback_state(False)
+    assert widget.media_play_btn.text() == "▶"
+    assert widget.audio_wave.is_active is False
 
     # Test metric updates
     metrics = SystemMetrics(

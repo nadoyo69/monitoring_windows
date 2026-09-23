@@ -3,12 +3,62 @@ import ctypes
 from PySide6.QtCore import Qt, QPoint, Signal, QTimer, QEvent
 from PySide6.QtGui import QAction, QFont, QCursor, QMouseEvent
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QFrame, QMenu, QApplication
+    QWidget, QHBoxLayout, QLabel, QFrame, QMenu, QApplication, QInputDialog
 )
 
 from src.config import AppConfig
 from src.sensor_manager import SystemMetrics
 from src.utils import get_temp_color, get_taskbar_geometry
+
+class AudioWaveWidget(QWidget):
+    """Miniature animated audio wave bars."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(22, 14)
+        self.is_active = False
+        self._bars = [3, 6, 9, 5]
+        self._step = 0
+        self._timer = QTimer(self)
+        self._timer.setInterval(120)
+        self._timer.timeout.connect(self._animate_step)
+
+    def set_active(self, active: bool):
+        self.is_active = active
+        if active:
+            if not self._timer.isActive():
+                self._timer.start()
+        else:
+            self._timer.stop()
+            self._bars = [2, 3, 2, 3]
+            self.update()
+
+    def _animate_step(self):
+        patterns = [
+            [3, 8, 12, 6],
+            [6, 12, 5, 10],
+            [10, 4, 11, 7],
+            [5, 11, 7, 4],
+            [8, 5, 12, 8]
+        ]
+        self._step = (self._step + 1) % len(patterns)
+        self._bars = patterns[self._step]
+        self.update()
+
+    def paintEvent(self, event):
+        from PySide6.QtGui import QPainter, QColor
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        color = QColor("#38bdf8") if self.is_active else QColor("#64748b")
+        painter.setBrush(color)
+        painter.setPen(Qt.PenStyle.NoPen)
+
+        x_coords = [1, 6, 11, 16]
+        w = 3
+        h_max = self.height()
+        for i, h in enumerate(self._bars):
+            y = h_max - h
+            painter.drawRect(x_coords[i], max(1, y), w, min(h, h_max - 1))
+
 
 class TaskbarWidget(QWidget):
     toggle_dashboard_requested = Signal()
@@ -16,6 +66,9 @@ class TaskbarWidget(QWidget):
     autorun_toggle_requested = Signal()
     exit_requested = Signal()
     lock_toggled = Signal(bool)
+    play_pause_clicked = Signal()
+    pip_toggle_clicked = Signal()
+    play_youtube_url_requested = Signal(str)
 
     def __init__(self, config: AppConfig, parent=None):
         super().__init__(parent)
@@ -23,6 +76,7 @@ class TaskbarWidget(QWidget):
         self._drag_pos = QPoint()
         self._is_dragging = False
         self._is_closing = False
+        self._is_playing = False
 
         # Configure window flags: frameless, always-on-top, tool window (no Alt+Tab entry)
         self.setWindowFlags(
@@ -40,7 +94,7 @@ class TaskbarWidget(QWidget):
     def _init_ui(self):
         self.setObjectName("TaskbarWidgetContainer")
         self.setFixedHeight(30)
-        self.setFixedWidth(320)
+        self.setFixedWidth(415)
 
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -117,7 +171,85 @@ class TaskbarWidget(QWidget):
         bar_layout.addWidget(self.net_down_lbl)
         bar_layout.addWidget(self.net_up_lbl)
 
+        # 4. Media Player Integrated Section
+        bar_layout.addWidget(self._create_separator())
+
+        # Play / Pause Button
+        self.media_play_btn = QLabel("▶")
+        self.media_play_btn.setFixedSize(18, 18)
+        self.media_play_btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.media_play_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.media_play_btn.setStyleSheet("""
+            QLabel {
+                color: #38bdf8;
+                font-size: 11px;
+                font-weight: bold;
+                border-radius: 3px;
+                padding-left: 1px;
+            }
+            QLabel:hover {
+                background-color: rgba(56, 189, 248, 0.25);
+                color: #ffffff;
+            }
+        """)
+        self.media_play_btn.setToolTip("Play / Pause YouTube")
+        self.media_play_btn.mousePressEvent = lambda e: self._on_play_btn_clicked(e)
+        bar_layout.addWidget(self.media_play_btn)
+
+        # Audio Wave Bar Animation
+        self.audio_wave = AudioWaveWidget()
+        self.audio_wave.setToolTip("YouTube Audio Stream")
+        bar_layout.addWidget(self.audio_wave)
+
+        # PiP Pop-up Button
+        self.media_pip_btn = QLabel("⤢")
+        self.media_pip_btn.setFixedSize(18, 18)
+        self.media_pip_btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.media_pip_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.media_pip_btn.setStyleSheet("""
+            QLabel {
+                color: #94a3b8;
+                font-size: 13px;
+                font-weight: bold;
+                border-radius: 3px;
+            }
+            QLabel:hover {
+                background-color: rgba(148, 163, 184, 0.2);
+                color: #38bdf8;
+            }
+        """)
+        self.media_pip_btn.setToolTip("Buka / Tutup Layar Video PiP")
+        self.media_pip_btn.mousePressEvent = lambda e: self._on_pip_btn_clicked(e)
+        bar_layout.addWidget(self.media_pip_btn)
+
         main_layout.addWidget(self.container)
+
+    def _on_play_btn_clicked(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.play_pause_clicked.emit()
+            event.accept()
+
+    def _on_pip_btn_clicked(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.pip_toggle_clicked.emit()
+            event.accept()
+
+    def set_playback_state(self, is_playing: bool):
+        self._is_playing = is_playing
+        self.media_play_btn.setText("⏸" if is_playing else "▶")
+        self.media_play_btn.setStyleSheet(f"""
+            QLabel {{
+                color: {'#10b981' if is_playing else '#38bdf8'};
+                font-size: 11px;
+                font-weight: bold;
+                border-radius: 3px;
+            }}
+            QLabel:hover {{
+                background-color: rgba(56, 189, 248, 0.25);
+                color: #ffffff;
+            }}
+        """)
+        self.audio_wave.set_active(is_playing)
 
     def _create_separator(self) -> QFrame:
         sep = QFrame()
@@ -335,6 +467,26 @@ class TaskbarWidget(QWidget):
 
         menu.addSeparator()
 
+        # YouTube Media Player Menu
+        act_pip = menu.addAction("🎦 Tampilkan / Sembunyikan Layar PiP")
+        act_pip.triggered.connect(lambda: self.pip_toggle_clicked.emit())
+
+        act_yt_url = menu.addAction("🎵 Masukkan URL YouTube...")
+        act_yt_url.triggered.connect(self._prompt_youtube_url)
+
+        yt_presets = menu.addMenu("📻 Preset Radio / Lofi 24/7")
+        presets = [
+            ("☕ Lofi Girl - Beats to relax/study", "https://www.youtube.com/watch?v=jfKfPfyJRdk"),
+            ("🎹 Chillhop Radio - Jazzy Beats", "https://www.youtube.com/watch?v=5yx6BWlEVcY"),
+            ("🌧️ Deep Focus Piano & Rain", "https://www.youtube.com/watch?v=WPni755-Krg"),
+            ("🎧 Synthwave Radio - Chill Beats", "https://www.youtube.com/watch?v=4xDzrJKXOOY")
+        ]
+        for name, url in presets:
+            act_preset = yt_presets.addAction(name)
+            act_preset.triggered.connect(lambda checked=False, u=url: self.play_youtube_url_requested.emit(u))
+
+        menu.addSeparator()
+
         act_dock_tb = menu.addAction("📌 Tempel di Dalam Taskbar")
         act_dock_tb.triggered.connect(lambda: self.dock_inside_taskbar(self.x()))
 
@@ -378,4 +530,14 @@ class TaskbarWidget(QWidget):
         self.config.refresh_interval = rate
         self.config.save()
         self.refresh_rate_changed.emit(rate)
+
+    def _prompt_youtube_url(self):
+        url, ok = QInputDialog.getText(
+            self,
+            "Putar YouTube",
+            "Masukkan Link Video / Live Stream YouTube:",
+            text=self.config.last_youtube_url
+        )
+        if ok and url.strip():
+            self.play_youtube_url_requested.emit(url.strip())
 

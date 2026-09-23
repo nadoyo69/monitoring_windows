@@ -19,6 +19,7 @@ from src.flyout_dashboard import FlyoutDashboard
 from src.sensor_manager import SensorWorker, SystemMetrics
 from src.taskbar_widget import TaskbarWidget
 from src.tray_manager import TrayManager
+from src.youtube_player import YouTubePipWindow
 
 LOCK_FILE_PATH = os.path.join(BASE_DIR, ".app.lock")
 
@@ -68,6 +69,15 @@ def main():
     taskbar_widget = TaskbarWidget(config=config)
     flyout_dashboard = FlyoutDashboard()
     tray_manager = TrayManager(config=config)
+    youtube_pip = YouTubePipWindow(config=config)
+
+    # Media / YouTube Wiring
+    taskbar_widget.play_pause_clicked.connect(youtube_pip.toggle_play)
+    taskbar_widget.pip_toggle_clicked.connect(
+        lambda: youtube_pip.toggle_pip_visible(taskbar_widget.geometry().topLeft())
+    )
+    taskbar_widget.play_youtube_url_requested.connect(youtube_pip.load_url)
+    youtube_pip.playback_state_changed.connect(taskbar_widget.set_playback_state)
 
     # Show initial components based on config
     if config.show_taskbar_widget:
@@ -142,6 +152,8 @@ def main():
     # Exit Handler
     def exit_app():
         sensor_worker.stop()
+        youtube_pip.stop_and_hide()
+        youtube_pip.close()
         flyout_dashboard.close()
         taskbar_widget.close()
         tray_manager.hide()

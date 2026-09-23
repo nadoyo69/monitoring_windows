@@ -20,6 +20,13 @@ class AppConfig:
         self.show_taskbar_widget: bool = True
         self.show_tray_icon: bool = True
         self.autorun_enabled: bool = False
+        # Media / YouTube player configs
+        self.last_youtube_url: str = "https://www.youtube.com/watch?v=jfKfPfyJRdk"  # Default Lofi Girl
+        self.pip_pos_x: Optional[int] = None
+        self.pip_pos_y: Optional[int] = None
+        self.pip_width: int = 360
+        self.pip_height: int = 202
+        self.media_volume: int = 80
         self.load()
 
     def load(self):
@@ -37,6 +44,12 @@ class AppConfig:
                 self.show_taskbar_widget = bool(data.get("show_taskbar_widget", True))
                 self.show_tray_icon = bool(data.get("show_tray_icon", True))
                 self.autorun_enabled = bool(data.get("autorun_enabled", False))
+                self.last_youtube_url = str(data.get("last_youtube_url", self.last_youtube_url))
+                self.pip_pos_x = data.get("pip_pos_x")
+                self.pip_pos_y = data.get("pip_pos_y")
+                self.pip_width = int(data.get("pip_width", 360))
+                self.pip_height = int(data.get("pip_height", 202))
+                self.media_volume = int(data.get("media_volume", 80))
         except Exception:
             pass
 
@@ -50,6 +63,12 @@ class AppConfig:
             "show_taskbar_widget": self.show_taskbar_widget,
             "show_tray_icon": self.show_tray_icon,
             "autorun_enabled": self.autorun_enabled,
+            "last_youtube_url": self.last_youtube_url,
+            "pip_pos_x": self.pip_pos_x,
+            "pip_pos_y": self.pip_pos_y,
+            "pip_width": self.pip_width,
+            "pip_height": self.pip_height,
+            "media_volume": self.media_volume,
         }
         try:
             os.makedirs(os.path.dirname(os.path.abspath(self.config_file)), exist_ok=True)
