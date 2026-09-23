@@ -73,6 +73,8 @@ def main():
 
     # Media / YouTube Wiring
     taskbar_widget.play_pause_clicked.connect(youtube_pip.toggle_play)
+    taskbar_widget.play_prev_clicked.connect(youtube_pip.prev_track)
+    taskbar_widget.play_next_clicked.connect(youtube_pip.next_track)
     taskbar_widget.pip_toggle_clicked.connect(
         lambda: youtube_pip.toggle_pip_visible(taskbar_widget.geometry().topLeft())
     )

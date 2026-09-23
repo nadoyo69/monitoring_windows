@@ -13,11 +13,11 @@ Docked seamlessly into the Windows taskbar with hardware metrics and an integrat
 ![Overview Taskbar Hardware Monitor with PiP](assets/youtube_pip_preview.jpg)
 
 ### 2. Mini Bar on Windows 10 / 11 Taskbar
-A translucent, frameless mini bar that seamlessly blends with the Windows taskbar, featuring hardware metrics and media controls:
+A translucent, frameless mini bar that seamlessly blends with the Windows taskbar, featuring hardware metrics and full media controls:
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ [CPU 8% 58°]  [RAM 83%]  [NET ↓703 ↑709]  │  ▶   lıllı   ⤢  │
-└──────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ [CPU 8% 58°]  [RAM 83%]  [NET ↓703 ↑709]  │  ⏮   ▶   ⏭   lıllı  ⤢  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 ![Mini Taskbar Bar Preview](assets/full_showcase_preview.jpg)
 
@@ -33,7 +33,12 @@ Click the mini bar or the system tray icon to reveal a Fluent/Glassmorphism popu
 
 - **Mini Taskbar Bar**: Sleek horizontal frameless floating bar docked near the taskbar, always visible on top of other windows (*Always on Top*).
 - **📺 Integrated YouTube Mini-Player & Picture-in-Picture (PiP)**:
-  - **Single Unified Pill**: Media controls embedded directly into the same taskbar bar (`▶` Play/Pause, `lıllı` Animated Audio Frequency Wave, `⤢` Pop-up PiP).
+  - **Single Unified Pill**: Complete media controls embedded directly into the same taskbar bar:
+    - `⏮` **Previous Track**: Restart track or skip back in playlist.
+    - `▶` / `⏸` **Play / Pause**: Instant playback toggle with active green indicator.
+    - `⏭` **Next Track**: Skip to next track in YouTube playlist or cycle presets.
+    - `lıllı` **Animated Audio Wave**: Glowing neon frequency bars animated with playback.
+    - `⤢` **Pop-up PiP**: Toggle floating video window.
   - **Floating PiP Window**: Frameless acrylic mini-window with Windows 11 rounded corners, draggable anywhere on your desktop and always-on-top.
   - **Auto-Bypass YouTube Embed Restriction (Error 152)**: Seamlessly handles restricted/licensed music videos with automatic clean theater mode fallback.
   - **Ultra-Low Resource / Hardware-Accelerated**: Video decoding runs directly on your GPU (e.g. Intel Arc Graphics), keeping CPU usage near zero and laptop temperatures cool.

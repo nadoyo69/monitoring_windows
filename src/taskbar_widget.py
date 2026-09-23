@@ -67,6 +67,8 @@ class TaskbarWidget(QWidget):
     exit_requested = Signal()
     lock_toggled = Signal(bool)
     play_pause_clicked = Signal()
+    play_prev_clicked = Signal()
+    play_next_clicked = Signal()
     pip_toggle_clicked = Signal()
     play_youtube_url_requested = Signal(str)
 
@@ -94,7 +96,7 @@ class TaskbarWidget(QWidget):
     def _init_ui(self):
         self.setObjectName("TaskbarWidgetContainer")
         self.setFixedHeight(30)
-        self.setFixedWidth(415)
+        self.setFixedWidth(460)
 
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -117,7 +119,7 @@ class TaskbarWidget(QWidget):
 
         bar_layout = QHBoxLayout(self.container)
         bar_layout.setContentsMargins(8, 2, 8, 2)
-        bar_layout.setSpacing(6)
+        bar_layout.setSpacing(5)
 
         font_family = "Segoe UI Variable Display, Segoe UI, sans-serif"
         label_font = QFont(font_family, 8, QFont.Weight.Bold)
@@ -174,6 +176,27 @@ class TaskbarWidget(QWidget):
         # 4. Media Player Integrated Section
         bar_layout.addWidget(self._create_separator())
 
+        # Previous Track Button
+        self.media_prev_btn = QLabel("⏮")
+        self.media_prev_btn.setFixedSize(16, 18)
+        self.media_prev_btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.media_prev_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.media_prev_btn.setStyleSheet("""
+            QLabel {
+                color: #94a3b8;
+                font-size: 10px;
+                font-weight: bold;
+                border-radius: 3px;
+            }
+            QLabel:hover {
+                background-color: rgba(148, 163, 184, 0.2);
+                color: #f8fafc;
+            }
+        """)
+        self.media_prev_btn.setToolTip("Video / Lagu Sebelumnya (Previous)")
+        self.media_prev_btn.mousePressEvent = lambda e: self._on_prev_btn_clicked(e)
+        bar_layout.addWidget(self.media_prev_btn)
+
         # Play / Pause Button
         self.media_play_btn = QLabel("▶")
         self.media_play_btn.setFixedSize(18, 18)
@@ -195,6 +218,27 @@ class TaskbarWidget(QWidget):
         self.media_play_btn.setToolTip("Play / Pause YouTube")
         self.media_play_btn.mousePressEvent = lambda e: self._on_play_btn_clicked(e)
         bar_layout.addWidget(self.media_play_btn)
+
+        # Next Track Button
+        self.media_next_btn = QLabel("⏭")
+        self.media_next_btn.setFixedSize(16, 18)
+        self.media_next_btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.media_next_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.media_next_btn.setStyleSheet("""
+            QLabel {
+                color: #94a3b8;
+                font-size: 10px;
+                font-weight: bold;
+                border-radius: 3px;
+            }
+            QLabel:hover {
+                background-color: rgba(148, 163, 184, 0.2);
+                color: #f8fafc;
+            }
+        """)
+        self.media_next_btn.setToolTip("Video / Lagu Berikutnya (Next)")
+        self.media_next_btn.mousePressEvent = lambda e: self._on_next_btn_clicked(e)
+        bar_layout.addWidget(self.media_next_btn)
 
         # Audio Wave Bar Animation
         self.audio_wave = AudioWaveWidget()
@@ -224,9 +268,19 @@ class TaskbarWidget(QWidget):
 
         main_layout.addWidget(self.container)
 
+    def _on_prev_btn_clicked(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.play_prev_clicked.emit()
+            event.accept()
+
     def _on_play_btn_clicked(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.play_pause_clicked.emit()
+            event.accept()
+
+    def _on_next_btn_clicked(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.play_next_clicked.emit()
             event.accept()
 
     def _on_pip_btn_clicked(self, event):

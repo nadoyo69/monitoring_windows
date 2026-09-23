@@ -14,8 +14,10 @@ def qapp():
 def test_taskbar_widget_init(qapp):
     cfg = AppConfig()
     widget = TaskbarWidget(config=cfg)
-    assert widget.width() == 415
+    assert widget.width() == 460
     assert widget.height() == 30
+    assert widget.media_prev_btn.text() == "⏮"
+    assert widget.media_next_btn.text() == "⏭"
 
     # Test media state updates
     widget.set_playback_state(True)

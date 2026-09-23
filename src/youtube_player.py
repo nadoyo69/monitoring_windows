@@ -119,6 +119,31 @@ function jsSetVolume(val) {
     var v = document.querySelector('video');
     if (v) v.volume = Math.max(0, Math.min(1, val / 100.0));
 }
+function jsNext() {
+    var nextBtn = document.querySelector('.ytp-next-button');
+    if (nextBtn && nextBtn.getAttribute('aria-disabled') !== 'true') {
+        nextBtn.click();
+        return true;
+    }
+    return false;
+}
+function jsPrev() {
+    var v = document.querySelector('video');
+    if (v && v.currentTime > 3) {
+        v.currentTime = 0;
+        return true;
+    }
+    var prevBtn = document.querySelector('.ytp-prev-button');
+    if (prevBtn && prevBtn.getAttribute('aria-disabled') !== 'true') {
+        prevBtn.click();
+        return true;
+    }
+    if (v) {
+        v.currentTime = 0;
+        return true;
+    }
+    return false;
+}
 """
 
 class CustomWebEnginePage(QWebEnginePage):
@@ -328,6 +353,43 @@ class YouTubePipWindow(QWidget):
         self.config.media_volume = vol
         self.config.save()
         self.web_view.page().runJavaScript(f"jsSetVolume({vol});")
+
+    PRESET_PLAYLIST = [
+        "https://www.youtube.com/watch?v=jfKfPfyJRdk",  # Lofi Girl
+        "https://www.youtube.com/watch?v=5yx6BWlEVcY",  # Chillhop
+        "https://www.youtube.com/watch?v=WPni755-Krg",  # Deep Focus Piano & Rain
+        "https://www.youtube.com/watch?v=4xDzrJKXOOY",  # Synthwave Chill Beats
+    ]
+
+    def next_track(self):
+        """Skip to next track in YouTube playlist or cycle through preset playlist."""
+        def on_js_result(handled):
+            if not handled:
+                # Cycle to next preset in playlist
+                curr = self.config.last_youtube_url
+                idx = 0
+                for i, u in enumerate(self.PRESET_PLAYLIST):
+                    if extract_youtube_id(u) == self.current_video_id:
+                        idx = (i + 1) % len(self.PRESET_PLAYLIST)
+                        break
+                self.load_url(self.PRESET_PLAYLIST[idx])
+
+        self.web_view.page().runJavaScript("jsNext();", on_js_result)
+
+    def prev_track(self):
+        """Restart current track or go to previous track in playlist."""
+        def on_js_result(handled):
+            if not handled:
+                # Cycle to previous preset in playlist
+                curr = self.config.last_youtube_url
+                idx = 0
+                for i, u in enumerate(self.PRESET_PLAYLIST):
+                    if extract_youtube_id(u) == self.current_video_id:
+                        idx = (i - 1) % len(self.PRESET_PLAYLIST)
+                        break
+                self.load_url(self.PRESET_PLAYLIST[idx])
+
+        self.web_view.page().runJavaScript("jsPrev();", on_js_result)
 
     def stop_and_hide(self):
         self.pause()
