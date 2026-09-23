@@ -13,7 +13,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import (
-    QWebEngineSettings, QWebEnginePage, QWebEngineProfile, QWebEngineScript
+    QWebEngineSettings, QWebEnginePage, QWebEngineProfile, QWebEngineScript,
+    QWebEngineUrlRequestInterceptor
 )
 
 from src.config import AppConfig
@@ -60,11 +61,77 @@ html, body {
     z-index: 999999 !important;
     background: #000 !important;
 }
+
+/* YouTube Ad Block and Cosmetic Filter */
+.video-ads, .ytp-ad-module, .ytp-ad-overlay-container,
+.ytp-ad-text-overlay, .ytp-ad-player-overlay,
+.ytp-ad-image-overlay, ytd-ad-slot-renderer,
+ytd-in-feed-ad-layout-renderer, ytd-banner-promo-renderer,
+#player-ads, .ytd-player-legacy-desktop-watch-ads-renderer,
+tp-yt-paper-dialog:has(ytd-enforcement-message-view-model),
+ytd-enforcement-message-view-model {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
 """
 
 INJECT_JS = """
 (function() {
+    function purgeAds() {
+        var v = document.querySelector('video');
+        var player = document.querySelector('#movie_player, .html5-video-player');
+
+        // 1. Detect if an ad is actively playing
+        var isAd = false;
+        if (player && (player.classList.contains('ad-showing') || player.classList.contains('ad-interrupting'))) {
+            isAd = true;
+        }
+        if (document.querySelector('.ytp-ad-player-overlay, .ad-showing, .ad-interrupting')) {
+            isAd = true;
+        }
+
+        if (isAd && v) {
+            // Instant fast-forward & bypass ad
+            v.muted = true;
+            v.playbackRate = 16.0;
+            if (isFinite(v.duration) && v.duration > 0) {
+                v.currentTime = v.duration;
+            }
+        }
+
+        // 2. Auto-click skip buttons instantaneously
+        var skipSelectors = [
+            '.ytp-ad-skip-button',
+            '.ytp-ad-skip-button-modern',
+            '.ytp-skip-ad-button',
+            '.ytp-ad-skip-button-slot button',
+            '[id^="skip-button"] button',
+            '.ytp-ad-overlay-close-button',
+            '.ytp-ad-feedback-dialog-close-button'
+        ];
+        for (var i = 0; i < skipSelectors.length; i++) {
+            var btns = document.querySelectorAll(skipSelectors[i]);
+            for (var j = 0; j < btns.length; j++) {
+                btns[j].click();
+            }
+        }
+
+        // 3. Auto-dismiss Anti-Adblock modal dialogs if any appear
+        var adblockModal = document.querySelector('ytd-enforcement-message-view-model');
+        if (adblockModal) {
+            var dialog = adblockModal.closest('tp-yt-paper-dialog');
+            if (dialog) dialog.remove();
+            else adblockModal.remove();
+            if (v && v.paused) v.play();
+        }
+    }
+
     function setupVideoControls() {
+        purgeAds();
         var v = document.querySelector('video');
         if (v && !v._attachedTaskbar) {
             v._attachedTaskbar = true;
@@ -74,8 +141,9 @@ INJECT_JS = """
             if (!v.paused) console.log('STATUS:PLAYING');
         }
 
-        // Auto click un-mute if video started muted
-        if (v && v.muted) {
+        // Auto click un-mute if video started muted outside of ad
+        var isAd = document.querySelector('.ad-showing, .ytp-ad-player-overlay');
+        if (v && v.muted && !isAd) {
             v.muted = false;
         }
 
@@ -97,7 +165,9 @@ INJECT_JS = """
         }
     }
 
-    setInterval(setupVideoControls, 800);
+    // Run rapid ad-purging loop (every 200ms)
+    setInterval(purgeAds, 200);
+    setInterval(setupVideoControls, 600);
 })();
 
 function jsPlay() {
@@ -145,6 +215,28 @@ function jsPrev() {
     return false;
 }
 """
+
+class AdBlockInterceptor(QWebEngineUrlRequestInterceptor):
+    """Intercept and block ad network domains and tracking endpoints."""
+    BLOCKED_DOMAINS = (
+        "doubleclick.net",
+        "googleadservices.com",
+        "googlesyndication.com",
+        "adservice.google.com",
+        "pagead2.googlesyndication.com",
+        "/pagead/",
+        "/api/stats/ads",
+        "/ptracking",
+        "youtube.com/generate_204",
+        "play.google.com/log",
+    )
+
+    def interceptRequest(self, info):
+        url = info.requestUrl().toString().lower()
+        for pattern in self.BLOCKED_DOMAINS:
+            if pattern in url:
+                info.block(True)
+                return
 
 class CustomWebEnginePage(QWebEnginePage):
     """Custom page to intercept console logs for playback state and embed error detection."""
@@ -276,11 +368,13 @@ class YouTubePipWindow(QWidget):
         self.custom_page.status_signal.connect(self._on_player_status)
         self.web_view.setPage(self.custom_page)
 
-        # Set realistic desktop browser User-Agent
+        # Set realistic desktop browser User-Agent & Install AdBlockInterceptor
         profile = self.custom_page.profile()
         profile.setHttpUserAgent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         )
+        self.ad_interceptor = AdBlockInterceptor(self)
+        profile.setUrlRequestInterceptor(self.ad_interceptor)
 
         # Configure WebEngine settings
         settings = self.web_view.settings()

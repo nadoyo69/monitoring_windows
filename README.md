@@ -40,6 +40,11 @@ Click the mini bar or the system tray icon to reveal a Fluent/Glassmorphism popu
     - `lıllı` **Animated Audio Wave**: Glowing neon frequency bars animated with playback.
     - `⤢` **Pop-up PiP**: Toggle floating video window.
   - **Floating PiP Window**: Frameless acrylic mini-window with Windows 11 rounded corners, draggable anywhere on your desktop and always-on-top.
+  - **🛡️ Built-in AdBlocker (Ad-Free Experience like Brave)**:
+    - **Network Interception**: Mencegat dan memblokir request domain pelacak dan iklan (`doubleclick`, `googleadservices`, `pagead`, `/api/stats/ads`) sebelum sempat diunduh dari jaringan.
+    - **Instant Ad Fast-Forward & Auto-Skip**: Otomatis mempercepat (16x) dan melompati video ads dalam hitungan milidetik secara senyap.
+    - **Anti-Adblock Auto-Dismiss**: Menghilangkan dialog pop-up peringatan adblock secara otomatis.
+    - **Cosmetic Filtering**: Menyembunyikan banner, sponsor overlay, dan kartu iklan di dalam player.
   - **Auto-Bypass YouTube Embed Restriction (Error 152)**: Seamlessly handles restricted/licensed music videos with automatic clean theater mode fallback.
   - **Ultra-Low Resource / Hardware-Accelerated**: Video decoding runs directly on your GPU (e.g. Intel Arc Graphics), keeping CPU usage near zero and laptop temperatures cool.
   - **Quick Radio Presets**: Right-click menu with 1-click access to *Lofi Girl 24/7*, *Chillhop*, *Deep Focus Piano*, and *Synthwave*.
